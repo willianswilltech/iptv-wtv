@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Server } from '../types';
 import ServerFormModal from './ServerFormModal';
@@ -5,9 +6,9 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface ServerManagementProps {
   servers: Server[];
-  onAddServer: (server: Omit<Server, 'id'>) => void;
-  onUpdateServer: (server: Server) => void;
-  onDeleteServer: (serverId: string) => void;
+  onAddServer: (server: Omit<Server, 'id'>) => Promise<void>;
+  onUpdateServer: (server: Server) => Promise<void>;
+  onDeleteServer: (serverId: string) => Promise<void>;
 }
 
 const ServerManagement: React.FC<ServerManagementProps> = ({ servers, onAddServer, onUpdateServer, onDeleteServer }) => {
@@ -24,11 +25,11 @@ const ServerManagement: React.FC<ServerManagementProps> = ({ servers, onAddServe
     setIsModalOpen(false);
   };
 
-  const handleSaveServer = (server: Server) => {
+  const handleSaveServer = async (server: Server) => {
     if (editingServer) {
-      onUpdateServer({ ...server, id: editingServer.id });
+      await onUpdateServer({ ...server, id: editingServer.id });
     } else {
-      onAddServer(server);
+      await onAddServer(server);
     }
     handleCloseModal();
   };
