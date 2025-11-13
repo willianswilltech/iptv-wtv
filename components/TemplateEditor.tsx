@@ -1,50 +1,24 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { MessageTemplate } from '../types';
 
 interface TemplateEditorProps {
   templates: MessageTemplate[];
-  onUpdateTemplate: (template: MessageTemplate) => Promise<void>;
+  onUpdateTemplate: (template: MessageTemplate) => void;
 }
 
 const TemplateEditor: React.FC<TemplateEditorProps> = ({ templates, onUpdateTemplate }) => {
-  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(templates.length > 0 ? templates[0] : null);
-  const [content, setContent] = useState<string>(templates.length > 0 ? templates[0].content : '');
-
-  useEffect(() => {
-    if (templates.length > 0 && !selectedTemplate) {
-        setSelectedTemplate(templates[0]);
-        setContent(templates[0].content);
-    }
-    if (selectedTemplate && !templates.find(t => t.id === selectedTemplate.id)) {
-        const newSelected = templates.length > 0 ? templates[0] : null;
-        setSelectedTemplate(newSelected);
-        setContent(newSelected ? newSelected.content : '');
-    }
-  }, [templates, selectedTemplate]);
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate>(templates[0]);
+  const [content, setContent] = useState<string>(templates[0].content);
 
   const handleSelectTemplate = (template: MessageTemplate) => {
     setSelectedTemplate(template);
     setContent(template.content);
   };
 
-  const handleSave = async () => {
-    if (selectedTemplate) {
-      await onUpdateTemplate({ ...selectedTemplate, content });
-      alert('Modelo salvo com sucesso!');
-    }
+  const handleSave = () => {
+    onUpdateTemplate({ ...selectedTemplate, content });
+    alert('Modelo salvo com sucesso!');
   };
-
-  if (!selectedTemplate) {
-    return (
-       <div>
-          <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Editor de Modelos de Mensagem</h2>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-              <p className="text-center text-gray-500 dark:text-gray-400">Nenhum modelo de mensagem disponível para edição.</p>
-          </div>
-      </div>
-    )
-  }
 
   return (
     <div>

@@ -8,9 +8,9 @@ interface ClientManagementProps {
   clients: Client[];
   plans: Plan[];
   servers: Server[];
-  onAddClient: (client: Omit<Client, 'id'>) => Promise<void>;
-  onUpdateClient: (client: Client) => Promise<void>;
-  onDeleteClient: (clientId: string) => Promise<void>;
+  onAddClient: (client: Client) => void;
+  onUpdateClient: (client: Client) => void;
+  onDeleteClient: (clientId: string) => void;
 }
 
 const ClientManagement: React.FC<ClientManagementProps> = ({ clients, plans, servers, onAddClient, onUpdateClient, onDeleteClient }) => {
@@ -27,11 +27,11 @@ const ClientManagement: React.FC<ClientManagementProps> = ({ clients, plans, ser
     setIsModalOpen(false);
   };
 
-  const handleSaveClient = async (client: Client) => {
+  const handleSaveClient = (client: Client) => {
     if (editingClient) {
-      await onUpdateClient({ ...client, id: editingClient.id });
+      onUpdateClient({ ...client, id: editingClient.id });
     } else {
-      await onAddClient(client);
+      onAddClient(client);
     }
     handleCloseModal();
   };

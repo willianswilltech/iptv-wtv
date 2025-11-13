@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Client, Plan, NotificationLog, MessageTemplate, Server } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -8,133 +8,68 @@ import PlanManagement from './components/PlanManagement';
 import ServerManagement from './components/ServerManagement';
 import TemplateEditor from './components/TemplateEditor';
 import NotificationHistory from './components/NotificationHistory';
-import * as api from './services/apiService';
+import { DUMMY_CLIENTS, DUMMY_PLANS, DUMMY_NOTIFICATIONS, DUMMY_TEMPLATES, DUMMY_SERVERS } from './mockData';
 
 type View = 'dashboard' | 'clients' | 'plans' | 'servers' | 'templates' | 'history';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('dashboard');
-  const [clients, setClients] = useState<Client[]>([]);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [servers, setServers] = useState<Server[]>([]);
-  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
-  const [notifications, setNotifications] = useState<NotificationLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [clients, setClients] = useState<Client[]>(DUMMY_CLIENTS);
+  const [plans, setPlans] = useState<Plan[]>(DUMMY_PLANS);
+  const [servers, setServers] = useState<Server[]>(DUMMY_SERVERS);
+  const [templates, setTemplates] = useState<MessageTemplate[]>(DUMMY_TEMPLATES);
+  const [notifications, setNotifications] = useState<NotificationLog[]>(DUMMY_NOTIFICATIONS);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        const [
-          clientsData,
-          plansData,
-          serversData,
-          templatesData,
-          notificationsData
-        ] = await api.getAllData();
-        
-        setClients(clientsData);
-        setPlans(plansData);
-        setServers(serversData);
-        setTemplates(templatesData);
-        setNotifications(notificationsData);
-
-      } catch (err) {
-        setError('Falha ao carregar os dados do servidor. Por favor, tente recarregar a página.');
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
-
-  const addClient = async (client: Omit<Client, 'id'>) => {
-    await api.addClient(client);
-    setClients(await api.getClients());
+  const addClient = (client: Client) => {
+    setClients(prev => [...prev, { ...client, id: Date.now().toString() }]);
   };
 
-  const updateClient = async (updatedClient: Client) => {
-    await api.updateClient(updatedClient);
-    setClients(await api.getClients());
+  const updateClient = (updatedClient: Client) => {
+    setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
   };
 
-  const deleteClient = async (clientId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-        await api.deleteClient(clientId);
-        setClients(await api.getClients());
-    }
+  const deleteClient = (clientId: string) => {
+    setClients(prev => prev.filter(c => c.id !== clientId));
   };
 
-  const addPlan = async (plan: Omit<Plan, 'id'>) => {
-    await api.addPlan(plan);
-    setPlans(await api.getPlans());
+  const addPlan = (plan: Plan) => {
+    setPlans(prev => [...prev, { ...plan, id: Date.now().toString() }]);
   };
 
-  const updatePlan = async (updatedPlan: Plan) => {
-    await api.updatePlan(updatedPlan);
-    setPlans(await api.getPlans());
+  const updatePlan = (updatedPlan: Plan) => {
+    setPlans(prev => prev.map(p => p.id === updatedPlan.id ? updatedPlan : p));
   };
   
-  const deletePlan = async (planId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este plano?')) {
-        await api.deletePlan(planId);
-        setPlans(await api.getPlans());
-    }
+  const deletePlan = (planId: string) => {
+    setPlans(prev => prev.filter(p => p.id !== planId));
   };
   
-  const addServer = async (server: Omit<Server, 'id'>) => {
-    await api.addServer(server);
-    setServers(await api.getServers());
+  const addServer = (server: Server) => {
+    setServers(prev => [...prev, { ...server, id: Date.now().toString() }]);
   };
 
-  const updateServer = async (updatedServer: Server) => {
-    await api.updateServer(updatedServer);
-    setServers(await api.getServers());
+  const updateServer = (updatedServer: Server) => {
+    setServers(prev => prev.map(s => s.id === updatedServer.id ? updatedServer : s));
   };
 
-  const deleteServer = async (serverId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este servidor?')) {
-        await api.deleteServer(serverId);
-        setServers(await api.getServers());
-    }
+  const deleteServer = (serverId: string) => {
+    setServers(prev => prev.filter(s => s.id !== serverId));
   };
 
-  const updateTemplate = async (updatedTemplate: MessageTemplate) => {
-    await api.updateTemplate(updatedTemplate);
-    setTemplates(await api.getTemplates());
+  const updateTemplate = (updatedTemplate: MessageTemplate) => {
+    setTemplates(prev => prev.map(t => t.id === updatedTemplate.id ? updatedTemplate : t));
   };
 
-  const addNotifications = async (newLogs: Omit<NotificationLog, 'id' | 'sentAt'>[]) => {
-    await api.addNotifications(newLogs);
-    setNotifications(await api.getNotifications());
+  const addNotifications = (newLogs: Omit<NotificationLog, 'id' | 'sentAt'>[]) => {
+    const fullLogs: NotificationLog[] = newLogs.map((log, index) => ({
+      ...log,
+      id: `notif-${log.clientId}-${Date.now()}-${index}`,
+      sentAt: new Date().toISOString()
+    }));
+    setNotifications(prev => [...fullLogs, ...prev].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()));
   };
 
   const renderView = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center h-full">
-          <svg className="animate-spin -ml-1 mr-3 h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span className="text-xl font-semibold">Carregando dados...</span>
-        </div>
-      );
-    }
-    
-    if (error) {
-      return (
-        <div className="flex justify-center items-center h-full text-center">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                <strong className="font-bold">Erro!</strong>
-                <span className="block sm:inline ml-2">{error}</span>
-            </div>
-        </div>
-      );
-    }
-
     switch (view) {
       case 'dashboard':
         return <Dashboard clients={clients} plans={plans} addNotifications={addNotifications} onUpdateClient={updateClient} />;

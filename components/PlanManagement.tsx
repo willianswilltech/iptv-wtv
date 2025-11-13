@@ -6,9 +6,9 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface PlanManagementProps {
   plans: Plan[];
-  onAddPlan: (plan: Omit<Plan, 'id'>) => Promise<void>;
-  onUpdatePlan: (plan: Plan) => Promise<void>;
-  onDeletePlan: (planId: string) => Promise<void>;
+  onAddPlan: (plan: Omit<Plan, 'id'>) => void;
+  onUpdatePlan: (plan: Plan) => void;
+  onDeletePlan: (planId: string) => void;
 }
 
 const PlanManagement: React.FC<PlanManagementProps> = ({ plans, onAddPlan, onUpdatePlan, onDeletePlan }) => {
@@ -25,11 +25,11 @@ const PlanManagement: React.FC<PlanManagementProps> = ({ plans, onAddPlan, onUpd
     setIsModalOpen(false);
   };
 
-  const handleSavePlan = async (plan: Plan) => {
+  const handleSavePlan = (plan: Plan) => {
     if (editingPlan) {
-      await onUpdatePlan({ ...plan, id: editingPlan.id });
+      onUpdatePlan({ ...plan, id: editingPlan.id });
     } else {
-      await onAddPlan(plan);
+      onAddPlan(plan);
     }
     handleCloseModal();
   };
