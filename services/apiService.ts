@@ -1,124 +1,156 @@
 import { Client, Plan, NotificationLog, MessageTemplate, Server } from '../types';
 import { DUMMY_CLIENTS, DUMMY_PLANS, DUMMY_NOTIFICATIONS, DUMMY_TEMPLATES, DUMMY_SERVERS } from '../mockData';
 
-// Simulate a database in memory
-let clients: Client[] = [...DUMMY_CLIENTS];
-let plans: Plan[] = [...DUMMY_PLANS];
-let servers: Server[] = [...DUMMY_SERVERS];
-let templates: MessageTemplate[] = [...DUMMY_TEMPLATES];
-let notifications: NotificationLog[] = [...DUMMY_NOTIFICATIONS].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+// --- Local Storage Helpers ---
+const STORAGE_KEYS = {
+  clients: 'wtv_clients',
+  plans: 'wtv_plans',
+  servers: 'wtv_servers',
+  templates: 'wtv_templates',
+  notifications: 'wtv_notifications',
+};
 
-const simulateNetworkDelay = (delay = 500) => new Promise(res => setTimeout(res, delay));
+const readFromStorage = <T>(key: string, defaultValue: T): T => {
+  try {
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn(`Error reading from localStorage key "${key}":`, error);
+    return defaultValue;
+  }
+};
+
+const writeToStorage = <T>(key: string, value: T): void => {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error writing to localStorage key "${key}":`, error);
+  }
+};
+
+// --- In-memory database, initialized from localStorage or mock data ---
+let clients: Client[] = readFromStorage(STORAGE_KEYS.clients, DUMMY_CLIENTS);
+let plans: Plan[] = readFromStorage(STORAGE_KEYS.plans, DUMMY_PLANS);
+let servers: Server[] = readFromStorage(STORAGE_KEYS.servers, DUMMY_SERVERS);
+let templates: MessageTemplate[] = readFromStorage(STORAGE_KEYS.templates, DUMMY_TEMPLATES);
+let notifications: NotificationLog[] = readFromStorage(STORAGE_KEYS.notifications, DUMMY_NOTIFICATIONS).sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+
+// Seed localStorage if it's empty on first load
+if (!window.localStorage.getItem(STORAGE_KEYS.clients)) {
+    writeToStorage(STORAGE_KEYS.clients, clients);
+    writeToStorage(STORAGE_KEYS.plans, plans);
+    writeToStorage(STORAGE_KEYS.servers, servers);
+    writeToStorage(STORAGE_KEYS.templates, templates);
+    writeToStorage(STORAGE_KEYS.notifications, notifications);
+}
+
 
 // --- Clients API ---
 export const getClients = async (): Promise<Client[]> => {
-  await simulateNetworkDelay();
-  return [...clients];
+  return Promise.resolve([...clients]);
 };
 
 export const addClient = async (clientData: Omit<Client, 'id'>): Promise<Client> => {
-  await simulateNetworkDelay();
   const newClient: Client = { ...clientData, id: `client-${Date.now()}` };
   clients.push(newClient);
-  return newClient;
+  writeToStorage(STORAGE_KEYS.clients, clients);
+  return Promise.resolve(newClient);
 };
 
 export const updateClient = async (updatedClient: Client): Promise<Client> => {
-  await simulateNetworkDelay();
   const index = clients.findIndex(c => c.id === updatedClient.id);
   if (index === -1) throw new Error("Client not found");
   clients[index] = updatedClient;
-  return updatedClient;
+  writeToStorage(STORAGE_KEYS.clients, clients);
+  return Promise.resolve(updatedClient);
 };
 
 export const deleteClient = async (clientId: string): Promise<void> => {
-  await simulateNetworkDelay();
   clients = clients.filter(c => c.id !== clientId);
+  writeToStorage(STORAGE_KEYS.clients, clients);
+  return Promise.resolve();
 };
 
 // --- Plans API ---
 export const getPlans = async (): Promise<Plan[]> => {
-  await simulateNetworkDelay();
-  return [...plans];
+  return Promise.resolve([...plans]);
 };
 
 export const addPlan = async (planData: Omit<Plan, 'id'>): Promise<Plan> => {
-    await simulateNetworkDelay();
     const newPlan: Plan = { ...planData, id: `plan-${Date.now()}` };
     plans.push(newPlan);
-    return newPlan;
+    writeToStorage(STORAGE_KEYS.plans, plans);
+    return Promise.resolve(newPlan);
 };
 
 export const updatePlan = async (updatedPlan: Plan): Promise<Plan> => {
-    await simulateNetworkDelay();
     const index = plans.findIndex(p => p.id === updatedPlan.id);
     if (index === -1) throw new Error("Plan not found");
     plans[index] = updatedPlan;
-    return updatedPlan;
+    writeToStorage(STORAGE_KEYS.plans, plans);
+    return Promise.resolve(updatedPlan);
 };
 
 export const deletePlan = async (planId: string): Promise<void> => {
-    await simulateNetworkDelay();
     plans = plans.filter(p => p.id !== planId);
+    writeToStorage(STORAGE_KEYS.plans, plans);
+    return Promise.resolve();
 };
 
 // --- Servers API ---
 export const getServers = async (): Promise<Server[]> => {
-    await simulateNetworkDelay();
-    return [...servers];
+    return Promise.resolve([...servers]);
 };
 
 export const addServer = async (serverData: Omit<Server, 'id'>): Promise<Server> => {
-    await simulateNetworkDelay();
     const newServer: Server = { ...serverData, id: `server-${Date.now()}` };
     servers.push(newServer);
-    return newServer;
+    writeToStorage(STORAGE_KEYS.servers, servers);
+    return Promise.resolve(newServer);
 };
 
 export const updateServer = async (updatedServer: Server): Promise<Server> => {
-    await simulateNetworkDelay();
     const index = servers.findIndex(s => s.id === updatedServer.id);
     if (index === -1) throw new Error("Server not found");
     servers[index] = updatedServer;
-    return updatedServer;
+    writeToStorage(STORAGE_KEYS.servers, servers);
+    return Promise.resolve(updatedServer);
 };
 
 export const deleteServer = async (serverId: string): Promise<void> => {
-    await simulateNetworkDelay();
     servers = servers.filter(s => s.id !== serverId);
+    writeToStorage(STORAGE_KEYS.servers, servers);
+    return Promise.resolve();
 };
 
 // --- Templates API ---
 export const getTemplates = async (): Promise<MessageTemplate[]> => {
-    await simulateNetworkDelay();
-    return [...templates];
+    return Promise.resolve([...templates]);
 };
 
 export const updateTemplate = async (updatedTemplate: MessageTemplate): Promise<MessageTemplate> => {
-    await simulateNetworkDelay();
     const index = templates.findIndex(t => t.id === updatedTemplate.id);
     if (index === -1) throw new Error("Template not found");
     templates[index] = updatedTemplate;
-    return updatedTemplate;
+    writeToStorage(STORAGE_KEYS.templates, templates);
+    return Promise.resolve(updatedTemplate);
 };
 
 // --- Notifications API ---
 export const getNotifications = async (): Promise<NotificationLog[]> => {
-    await simulateNetworkDelay();
-    return [...notifications];
+    return Promise.resolve([...notifications]);
 };
 
 export const addNotifications = async (newLogs: Omit<NotificationLog, 'id' | 'sentAt'>[]): Promise<NotificationLog[]> => {
-    await simulateNetworkDelay();
     const fullLogs: NotificationLog[] = newLogs.map((log, index) => ({
       ...log,
       id: `notif-${log.clientId}-${Date.now()}-${index}`,
       sentAt: new Date().toISOString()
     }));
     notifications = [...fullLogs, ...notifications].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
-    return fullLogs;
+    writeToStorage(STORAGE_KEYS.notifications, notifications);
+    return Promise.resolve(fullLogs);
 };
 
 // --- All Data ---
-// FIX: Add an explicit return type to ensure TypeScript infers a tuple, not an array of unions.
 export const getAllData = async (): Promise<[Client[], Plan[], Server[], MessageTemplate[], NotificationLog[
